@@ -84,15 +84,20 @@ class Trainer:
             dog.feed()
             await custom_sleep(2)
 
-# Handler - handles the main loop
+''' clinic class will hold the employees and the animals
+ entry_queue simulates the clinic waiting room. Dogs are brought in and sent to the pen
+ the employees gather them from the pen and return them when finished
+ the dog_return_que simulates dogs that have been returned'''
 class Clinic:
     def __init__(self, dogqueue=[], veterinarians=[], groomers=[], trainers=[]):
-        self.dogqueue = dogqueue
+        self.entry_queue = dogqueue
+        self.pen = []
+        self.dog_return_queue = []
         self.veterinarians = veterinarians
         self.groomers = groomers
         self.trainers = trainers
-        self.pen = []
-        self.dog_return_que = []
+        
+        self.conditions = {}
     def generate_clinic(self,no_dogs,no_vets,no_groomers,no_trainers):
         ''' This will setup the main handler with animals and employees'''
         breeds = ['Retriever','Terrier','Dane','Mutt','Poodle','Bulldog','Wolf','Sheepdog']
@@ -102,7 +107,7 @@ class Clinic:
             condition = ['untrimmed','unhealthy','hungry']
             breed = random.choice(breeds)
             dog = Dog(name,age,breed,condition)
-            self.dogqueue.append(dog)
+            self.entry_queue.append(dog)
         for i in range(no_vets):
             vet = Vet()
             self.veterinarians.append(vet)
@@ -112,8 +117,16 @@ class Clinic:
         for i in range(no_trainers):
             trainer = Trainer()
             self.trainers.append(trainer)
-    def dog_count(self):
-        x = len(self.dogqueue)
+    def add_dog_pen(self, dog):
+        for cond in dog.condition:
+            if cond in self.conditions:
+                self.conditions[cond] += 1
+            else:
+                self.conditions[cond] = 1
+        self.pen.append(dog)
+
+    def dog_count_entry(self):
+        x = len(self.entry_queue)
         return x
     def vet_count(self):
         return len(self.veterinarians)
@@ -140,7 +153,7 @@ if __name__ == "__main__":
     #     print(finish_time-start_time)
     clinic = Clinic()
     clinic.generate_clinic(5,2,2,2)
-    print(clinic.dog_count(), clinic.dogqueue)
+    print(clinic.dog_count_entry(), clinic.entry_queue)
     print(clinic.vet_count(), clinic.veterinarians)
     print(clinic.groom_count(),clinic.groomers)
     print(clinic.train_count(),clinic.trainers)
@@ -148,3 +161,10 @@ if __name__ == "__main__":
         print(groomer)
     for vet in clinic.veterinarians:
         print(vet)
+    for dog in clinic.entry_queue[:]:
+        clinic.add_dog_pen(dog)
+        clinic.entry_queue.remove(dog)
+        
+    print(clinic.dog_count_entry(),clinic.entry_queue)
+    print(clinic.pen)
+    print(clinic.conditions)

@@ -1,5 +1,5 @@
 import asyncio
-import time
+import time, random
 from datetime import datetime
 
 async def custom_sleep(x):
@@ -22,6 +22,9 @@ class Dog:
         self.age = age
         self.breed = breed
         self.condition = condition
+    def __repr__(self):
+        # return {'name:':self.name, 'age:':self.age, 'breed:':self.breed,'cond:':self.condition}
+        return f"Name: {self.name}, Age: {self.age}, Breed: {self.breed}, Cond:{self.condition}"
 
     def groom(self):
         if 'untrimmed' in self.condition:
@@ -48,7 +51,8 @@ class Vet:
         Vet.population += 1
         self.name = "Vet #" + str(Vet.population)
         print('Acquireing {}'.format(self.name))
-    
+    def __repr__(self):
+        return self.name    
     async def treat_dog(self,dog):
         if 'unhealthy' in dog.condition:
             dog.heal()
@@ -60,6 +64,8 @@ class Groomer:
     def __init__(self):
         Groomer.population += 1
         self.name = "Groomer #" + str(Groomer.population)
+    def __repr__(self):
+        return self.name
     async def groom_dog(self, dog):
         if 'untrimmed' in dog.condition:
             dog.groom()
@@ -71,18 +77,41 @@ class Trainer:
     def __init__(self):
         Trainer.population += 1
         self.name = "Trainer #" + str(Trainer.population)
+    def __repr__(self):
+        return self.name
     async def feed_dog(self, dog):
         if 'hungry' in dog.condition:
             dog.feed()
             await custom_sleep(2)
 
 # Handler - handles the main loop
-class Main_Handler:
-    def __init__(self, dogqueue, veterinarians, groomers, trainers):
+class Clinic:
+    def __init__(self, dogqueue=[], veterinarians=[], groomers=[], trainers=[]):
         self.dogqueue = dogqueue
         self.veterinarians = veterinarians
         self.groomers = groomers
         self.trainers = trainers
+        self.pen = []
+        self.dog_return_que = []
+    def generate_clinic(self,no_dogs,no_vets,no_groomers,no_trainers):
+        ''' This will setup the main handler with animals and employees'''
+        breeds = ['Retriever','Terrier','Dane','Mutt','Poodle','Bulldog','Wolf','Sheepdog']
+        for i in range(no_dogs):
+            name = 'Dog #' + str(i+1)
+            age = int((random.randint(1,15) + random.randint(1,15))/2)
+            condition = ['untrimmed','unhealthy','hungry']
+            breed = random.choice(breeds)
+            dog = Dog(name,age,breed,condition)
+            self.dogqueue.append(dog)
+        for i in range(no_vets):
+            vet = Vet()
+            self.veterinarians.append(vet)
+        for i in range(no_groomers):
+            groomer = Groomer()
+            self.groomers.append(groomer)
+        for i in range(no_trainers):
+            trainer = Trainer()
+            self.trainers.append(trainer)
     def dog_count(self):
         x = len(self.dogqueue)
         return x
@@ -93,19 +122,29 @@ class Main_Handler:
     def train_count(self):
         return len(self.trainers)
 if __name__ == "__main__":
-    doglist = [['jake',8,'terrier',['untrimmed','unhealthy','hungry']]]
-    for animal in doglist:
-        start_time = datetime.now()
-        dog = Dog(doglist[0][0],doglist[0][1],doglist[0][2],doglist[0][3])
-        print(dog.name, dog.condition)
-        vet = Vet()
-        groomer = Groomer()
-        trainer = Trainer()
-        loop = asyncio.get_event_loop()
-        tasks = [vet.treat_dog(dog),empty_space(),groomer.groom_dog(dog),trainer.feed_dog(dog)]
-        # vet.treat_dog(dog)
-        loop.run_until_complete(asyncio.wait(tasks))
-        loop.close()
-        print(dog.name,dog.condition)
-        finish_time = datetime.now()
-        print(finish_time-start_time)
+    # doglist = [['jake',8,'terrier',['untrimmed','unhealthy','hungry']]]
+    # for animal in doglist:
+    #     start_time = datetime.now()
+    #     dog = Dog(doglist[0][0],doglist[0][1],doglist[0][2],doglist[0][3])
+    #     print(dog.name, dog.condition)
+    #     vet = Vet()
+    #     groomer = Groomer()
+    #     trainer = Trainer()
+    #     loop = asyncio.get_event_loop()
+    #     tasks = [vet.treat_dog(dog),empty_space(),groomer.groom_dog(dog),trainer.feed_dog(dog)]
+    #     # vet.treat_dog(dog)
+    #     loop.run_until_complete(asyncio.wait(tasks))
+    #     loop.close()
+    #     print(dog.name,dog.condition)
+    #     finish_time = datetime.now()
+    #     print(finish_time-start_time)
+    clinic = Clinic()
+    clinic.generate_clinic(5,2,2,2)
+    print(clinic.dog_count(), clinic.dogqueue)
+    print(clinic.vet_count(), clinic.veterinarians)
+    print(clinic.groom_count(),clinic.groomers)
+    print(clinic.train_count(),clinic.trainers)
+    for groomer in clinic.groomers:
+        print(groomer)
+    for vet in clinic.veterinarians:
+        print(vet)

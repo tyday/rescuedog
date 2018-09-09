@@ -163,12 +163,17 @@ class Clinic:
     def dog_count_entry(self):
         x = len(self.entry_queue)
         return x
+    def dog_count_pen(self):
+        x = len(self.pen)
+        return x
     def vet_count(self):
         return len(self.veterinarians)
     def groom_count(self):
         return len(self.groomers)
     def train_count(self):
         return len(self.trainers)
+    def valet_count(self):
+        return len(self.valets)
 if __name__ == "__main__":
     # doglist = [['jake',8,'terrier',['untrimmed','unhealthy','hungry']]]
     # for animal in doglist:

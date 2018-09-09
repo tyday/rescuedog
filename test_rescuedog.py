@@ -14,15 +14,24 @@ def test_dog_class():
     assert 'unhealthy' not in dog.condition
     dog.feed()
     assert 'hungry' not in dog.condition
-def test_Main_Handler_class():
-    dog1 = Dog('jake',8,'terrier',['untrimmed','unhealthy','hungry'])
-    dog2 = Dog('punjab',38,'dane',['untrimmed','unhealthy','hungry'])
-    doglist = [dog1,dog2]
-    vet = Vet()
-    trainer = Trainer()
-    groomer = Groomer()
-    main_handler = Main_Handler(doglist,[vet],[groomer],[trainer])
-    assert main_handler.dog_count() == 2
-    assert main_handler.vet_count() == 1
-    assert main_handler.groom_count() == 1
-    assert main_handler.train_count() == 1
+def test_Clinic_class():
+    # dog1 = Dog('jake',8,'terrier',['untrimmed','unhealthy','hungry'])
+    # dog2 = Dog('punjab',38,'dane',['untrimmed','unhealthy','hungry'])
+    # doglist = [dog1,dog2]
+    # vet = Vet()
+    # trainer = Trainer()
+    # groomer = Groomer()
+    clinic = Clinic()
+    clinic.generate_clinic(5,2,2,2,2)
+    assert clinic.dog_count_entry() == 5
+    assert clinic.vet_count() == 2
+    assert clinic.groom_count() == 2
+    assert clinic.train_count() == 2
+    assert clinic.valet_count() == 2
+    valet = clinic.valets[0]
+    i = clinic.dog_count_entry()
+    for dog in clinic.entry_queue[:]:
+        valet.enter_dog(dog,clinic)
+        i -= 1
+        assert clinic.dog_count_entry() == i
+    assert clinic.dog_count_pen() == 5

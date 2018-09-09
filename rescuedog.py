@@ -84,21 +84,38 @@ class Trainer:
             dog.feed()
             await custom_sleep(2)
 
+class Valet:
+    population = 0
+    def __init__(self):
+        Valet.population += 1
+        self.name = "Valet #" + str(Valet.population)
+    def __repr__(self):
+        return self.name
+    def enter_dog(self,dog,clinic):
+        # await custom_sleep(1)
+        clinic.rem_dog_entry(dog)
+        clinic.add_dog_pen(dog)
+    def exit_dog(self,dog,clinic):
+        # await custom_sleep(1)
+        clinic.rem_dog_pen(dog)
+        clinic.add_dog_exit(dog)
+
 ''' clinic class will hold the employees and the animals
  entry_queue simulates the clinic waiting room. Dogs are brought in and sent to the pen
  the employees gather them from the pen and return them when finished
  the dog_return_que simulates dogs that have been returned'''
 class Clinic:
-    def __init__(self, dogqueue=[], veterinarians=[], groomers=[], trainers=[]):
+    def __init__(self, dogqueue=[], veterinarians=[], groomers=[], trainers=[], valets=[]):
         self.entry_queue = dogqueue
         self.pen = []
-        self.dog_return_queue = []
+        self.exit_queue = []
         self.veterinarians = veterinarians
         self.groomers = groomers
         self.trainers = trainers
+        self.valets = valets
         
         self.conditions = {}
-    def generate_clinic(self,no_dogs,no_vets,no_groomers,no_trainers):
+    def generate_clinic(self,no_dogs,no_vets,no_groomers,no_trainers,no_valets):
         ''' This will setup the main handler with animals and employees'''
         breeds = ['Retriever','Terrier','Dane','Mutt','Poodle','Bulldog','Wolf','Sheepdog']
         for i in range(no_dogs):
@@ -117,6 +134,9 @@ class Clinic:
         for i in range(no_trainers):
             trainer = Trainer()
             self.trainers.append(trainer)
+        for i in range(no_valets):
+            valet = Valet()
+            self.valets.append(valet)
     def add_dog_pen(self, dog):
         for cond in dog.condition:
             if cond in self.conditions:
@@ -124,6 +144,21 @@ class Clinic:
             else:
                 self.conditions[cond] = 1
         self.pen.append(dog)
+    def rem_dog_pen(self, dog):
+        for cond in dog.condition:
+            if cond in self.conditions:
+                self.conditions[cond] -= 1
+            else:
+                print('error in rem_dog_pen')
+        self.pen.remove(dog)
+    def rem_dog_entry(self, dog):
+        self.entry_queue.remove(dog)
+    def add_dog_entry(self,dog):
+        self.entry_queue.append(dog)
+    def add_dog_exit(self,dog):
+        self.exit_queue.append(dog)
+    def rem_dog_exit(self,dog):
+        self.exit_queue.remove(dog)
 
     def dog_count_entry(self):
         x = len(self.entry_queue)
@@ -152,19 +187,32 @@ if __name__ == "__main__":
     #     finish_time = datetime.now()
     #     print(finish_time-start_time)
     clinic = Clinic()
-    clinic.generate_clinic(5,2,2,2)
+    clinic.generate_clinic(5,2,2,2,2)
     print(clinic.dog_count_entry(), clinic.entry_queue)
     print(clinic.vet_count(), clinic.veterinarians)
     print(clinic.groom_count(),clinic.groomers)
     print(clinic.train_count(),clinic.trainers)
+    for dog in clinic.entry_queue[:]:
+        print('Hi', dog)
+        valet = clinic.valets[0]
+        valet.enter_dog(dog,clinic)
+
     for groomer in clinic.groomers:
         print(groomer)
     for vet in clinic.veterinarians:
         print(vet)
-    for dog in clinic.entry_queue[:]:
-        clinic.add_dog_pen(dog)
-        clinic.entry_queue.remove(dog)
+    for valet in clinic.valets:
+        print(valet)
+    # for dog in clinic.entry_queue[:]:
+
         
-    print(clinic.dog_count_entry(),clinic.entry_queue)
-    print(clinic.pen)
+        
+    print("entry queue",clinic.dog_count_entry(),clinic.entry_queue)
+    print('Pen: ', clinic.pen)
+    print(clinic.conditions)
+    print("removing dogs...")
+    for dog in clinic.pen[:]:
+        valet.exit_dog(dog,clinic)
+        # clinic.rem_dog_pen(dog)
+    print('Pen: ',clinic.pen)
     print(clinic.conditions)

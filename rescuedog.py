@@ -48,8 +48,9 @@ class employee:
         cycle = 1
 
         while clinic.running:
+            sleep_time = 0
             try: #if self.repair in clinic.conditions['unhealthy']:
-                if clinic.conditions['unhealthy'] > 0:
+                if clinic.conditions[self.repair] > 0:
                     dog = clinic.get_dog(self.repair)
                     clinic.rem_dog_pen(dog)
                     print(f'{self.name} is {conditions_descriptions[self.repair]} {dog.name}')
@@ -60,14 +61,14 @@ class employee:
                 else:
                     cycle += 1
                     if cycle > 10:
-                        print(f'{self.name} sleeping.')
-                        await custom_sleep(cycle//10)
-                    if cycle > 100:
-                        print(f'{self.name} sleeping.')
-                        await custom_sleep(10)
+                        sleep_time = cycle//10
+                    elif cycle > 100:
+                        sleep_time = 10
                     else:
-                        print(f'{self.name} sleeping.')
-                        await custom_sleep(1)
+                        sleep_time = 1
+                    if cycle%10 == 0:
+                        print(f'{self.name} sleeping for {sleep_time} seconds.')
+                    await custom_sleep(sleep_time)
             except:
                 print(f'An exception occured for {self.name}.')
                 await custom_sleep(1)
@@ -90,11 +91,13 @@ class Vet(employee):
             await custom_sleep(2)
 
 # groomer - grooms dog
-class Groomer:
+class Groomer(employee):
     population = 0
     def __init__(self):
         Groomer.population += 1
         self.name = "Groomer #" + str(Groomer.population)
+        self.repair = 'untrimmed'
+        self.repair_time = 2
     def __repr__(self):
         return self.name
     async def groom_dog(self, dog):
@@ -103,11 +106,13 @@ class Groomer:
             await custom_sleep(2)
 
 # trainer - feeds dog
-class Trainer:
+class Trainer(employee):
     population = 0
     def __init__(self):
         Trainer.population += 1
         self.name = "Trainer #" + str(Trainer.population)
+        self.repair = 'hungry'
+        self.repair_time = 2
     def __repr__(self):
         return self.name
     async def feed_dog(self, dog):
@@ -136,7 +141,7 @@ class Valet:
             if len(clinic.entry_queue)>0:
                 dog = clinic.entry_queue.pop()
                 await self.enter_dog(dog,clinic)
-                print(f'{self.name} transporting dog to pen.')
+                print(f'{self.name} transporting {dog.name} to pen.')
             else:
                 cycle += 1
                 if cycle > 10:
@@ -187,6 +192,8 @@ class Clinic:
             valet = Valet()
             self.valets.append(valet)
     def add_dog_pen(self, dog):
+        if len(dog.condition) == 0:
+            dog.condition.append('Ready for home')
         for cond in dog.condition:
             if cond in self.conditions:
                 self.conditions[cond] += 1
@@ -285,6 +292,10 @@ if __name__ == "__main__":
         tasks.append(valet.routine(clinic))
     for vet in clinic.veterinarians:
         tasks.append(vet.routine(clinic))
+    for groomer in clinic.groomers:
+        tasks.append(groomer.routine(clinic))
+    for trainer in clinic.trainers:
+        tasks.append(trainer.routine(clinic))
     tasks.append(clinic.routine())
         # employees.append(trainer)
     # tasks = [employees[0].routine()]

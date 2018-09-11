@@ -3,7 +3,7 @@ import time, random
 from datetime import datetime
 
 async def custom_sleep(x):
-    print('Sleep', datetime.now())
+    # print('Sleep', datetime.now())
     await asyncio.sleep(x)
 async def empty_space():
     print('this is empty. A waste of time.')
@@ -91,15 +91,32 @@ class Valet:
         self.name = "Valet #" + str(Valet.population)
     def __repr__(self):
         return self.name
-    def enter_dog(self,dog,clinic):
-        # await custom_sleep(1)
-        clinic.rem_dog_entry(dog)
+    async def enter_dog(self,dog,clinic):
+        await custom_sleep(1)
+        # clinic.rem_dog_entry(dog)
         clinic.add_dog_pen(dog)
     def exit_dog(self,dog,clinic):
         # await custom_sleep(1)
         clinic.rem_dog_pen(dog)
         clinic.add_dog_exit(dog)
-
+    async def routine(self,clinic):
+        cycle = 0
+        while len(clinic.entry_queue) > 0:
+            if len(clinic.entry_queue)>0:
+                dog = clinic.entry_queue.pop()
+                await self.enter_dog(dog,clinic)
+                print(f'{self.name} transporting dog to pen.')
+            else:
+                cycle += 1
+                if cycle > 10:
+                    print(f'{self.name} sleeping.')
+                    await custom_sleep(cycle//10)
+                if cycle > 100:
+                    print(f'{self.name} sleeping.')
+                    await custom_sleep(10)
+                else:
+                    print(f'{self.name} sleeping.')
+                    await custom_sleep(1)
 ''' clinic class will hold the employees and the animals
  entry_queue simulates the clinic waiting room. Dogs are brought in and sent to the pen
  the employees gather them from the pen and return them when finished
@@ -159,7 +176,11 @@ class Clinic:
         self.exit_queue.append(dog)
     def rem_dog_exit(self,dog):
         self.exit_queue.remove(dog)
-
+    def get_dog(self,condition):
+        for dog in self.pen:
+            if condition in dog.condition:
+                return dog
+        print(f'get_dog failed to find a dog with the condition: {condition}')
     def dog_count_entry(self):
         x = len(self.entry_queue)
         return x
@@ -197,17 +218,17 @@ if __name__ == "__main__":
     print(clinic.vet_count(), clinic.veterinarians)
     print(clinic.groom_count(),clinic.groomers)
     print(clinic.train_count(),clinic.trainers)
-    for dog in clinic.entry_queue[:]:
-        print('Hi', dog)
-        valet = clinic.valets[0]
-        valet.enter_dog(dog,clinic)
+    print(clinic.valet_count(),clinic.valets)
+    # for dog in clinic.entry_queue[:]:
+    #     valet = clinic.valets[0]
+    #     valet.enter_dog(dog,clinic)
 
-    for groomer in clinic.groomers:
-        print(groomer)
-    for vet in clinic.veterinarians:
-        print(vet)
-    for valet in clinic.valets:
-        print(valet)
+    # for groomer in clinic.groomers:
+    #     print(groomer)
+    # for vet in clinic.veterinarians:
+    #     print(vet)
+    # for valet in clinic.valets:
+    #     print(valet)
     # for dog in clinic.entry_queue[:]:
 
         
@@ -215,9 +236,19 @@ if __name__ == "__main__":
     print("entry queue",clinic.dog_count_entry(),clinic.entry_queue)
     print('Pen: ', clinic.pen)
     print(clinic.conditions)
-    print("removing dogs...")
-    for dog in clinic.pen[:]:
-        valet.exit_dog(dog,clinic)
-        # clinic.rem_dog_pen(dog)
+    print("moving dogs...")
+    loop = asyncio.get_event_loop()
+    tasks = []
+    employees = []
+    for valet in clinic.valets:
+        tasks.append(valet.routine(clinic))
+        # employees.append(trainer)
+    # tasks = [employees[0].routine()]
+    # vet.treat_dog(dog)
+    loop.run_until_complete(asyncio.wait(tasks))
+    loop.close()
+    # for dog in clinic.pen[:]:
+    #     valet.exit_dog(dog,clinic)
+    #     # clinic.rem_dog_pen(dog)
     print('Pen: ',clinic.pen)
     print(clinic.conditions)

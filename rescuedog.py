@@ -137,22 +137,33 @@ class Valet:
         clinic.add_dog_exit(dog)
     async def routine(self,clinic):
         cycle = 0
-        while len(clinic.entry_queue) > 0:
-            if len(clinic.entry_queue)>0:
-                dog = clinic.entry_queue.pop()
-                await self.enter_dog(dog,clinic)
-                print(f'{self.name} transporting {dog.name} to pen.')
-            else:
-                cycle += 1
-                if cycle > 10:
-                    print(f'{self.name} sleeping.')
-                    await custom_sleep(cycle//10)
-                if cycle > 100:
-                    print(f'{self.name} sleeping.')
+        while clinic.running:
+            try:
+                sleep_time = 0
+                if len(clinic.entry_queue)>0:
+                    dog = clinic.entry_queue.pop()
+                    await self.enter_dog(dog,clinic)
+                    print(f'{self.name} transporting {dog.name} to pen.')
+                elif 'Ready for home' in clinic.conditions and clinic.conditions['Ready for home'] > 0:
+                    dog = clinic.get_dog('Ready for home')
+                    clinic.rem_dog_pen(dog)
+                    print(f'{self.name} returning {dog.name} to customer.')
                     await custom_sleep(10)
+                    clinic.add_dog_exit(dog)
                 else:
-                    print(f'{self.name} sleeping.')
-                    await custom_sleep(1)
+                    cycle += 1
+                    if cycle > 10:
+                        sleep_time = cycle // 10
+                        
+                    elif cycle > 100:
+                        sleep_time = 10
+                    else:
+                        sleep_time = 1
+                    if cycle % 10 == 0:
+                        print(f'{self.name} sleeping.')
+                    await custom_sleep(sleep_time)
+            except:
+                print('exception in clinic.routine()')
 ''' clinic class will hold the employees and the animals
  entry_queue simulates the clinic waiting room. Dogs are brought in and sent to the pen
  the employees gather them from the pen and return them when finished
@@ -167,6 +178,7 @@ class Clinic:
         self.trainers = trainers
         self.valets = valets
         self.running = True
+        self.dogs_to_treat = 0
         
         self.conditions = {}
     def generate_clinic(self,no_dogs,no_vets,no_groomers,no_trainers,no_valets):
@@ -179,6 +191,7 @@ class Clinic:
             breed = random.choice(breeds)
             dog = Dog(name,age,breed,condition)
             self.entry_queue.append(dog)
+            self.dogs_to_treat += 1
         for i in range(no_vets):
             vet = Vet()
             self.veterinarians.append(vet)
@@ -241,6 +254,9 @@ class Clinic:
                 print(f"{clinic.conditions}")
                 print(f"Dogs Entry: {len(clinic.entry_queue)} Dogs Pen: {len(clinic.pen)} Dogs Exit: {len(clinic.exit_queue)}")
                 await custom_sleep(10)
+                if self.dogs_to_treat == len(self.exit_queue):
+                    print(f'Clinic Routine exit {self.dogs_to_treat} and exit_queue {len(self.exit_queue)}')
+                    self.running = False
         except:
             print('Error in clinic.routine()')
 if __name__ == "__main__":
@@ -307,5 +323,4 @@ if __name__ == "__main__":
     #     # clinic.rem_dog_pen(dog)
     print('Pen: ',clinic.pen)
     print(clinic.conditions)
-    word='unhealthy'
-    print(clinic.conditions[word],'--test')
+    print('Exit_queue: ', clinic.exit_queue)

@@ -7,7 +7,7 @@ async def custom_sleep(x):
     await asyncio.sleep(x)
 async def empty_space():
     print('this is empty. A waste of time.')
-
+conditions_descriptions = {'unhealthy':'healing','untrimmed':'grooming','hungry':'feeding'}
 # Dog Object that holds a dog
 # includes name, age, breed
 # the last element was state... but I think I'm going to include multiples
@@ -43,13 +43,44 @@ class Dog:
 # it can be something more interesting that calls the controller object to alert them of incoming dogs
 # does the pen work autonomously from the controller? or does the controller field new dogs and pen them?
 
+class employee:
+    async def routine(self,clinic):
+        cycle = 1
+
+        while clinic.running:
+            try: #if self.repair in clinic.conditions['unhealthy']:
+                if clinic.conditions['unhealthy'] > 0:
+                    dog = clinic.get_dog(self.repair)
+                    clinic.rem_dog_pen(dog)
+                    print(f'{self.name} is {conditions_descriptions[self.repair]} {dog.name}')
+                    await custom_sleep(self.repair_time)
+                    if self.repair in dog.condition:
+                        dog.condition.remove(self.repair)
+                    clinic.add_dog_pen(dog)
+                else:
+                    cycle += 1
+                    if cycle > 10:
+                        print(f'{self.name} sleeping.')
+                        await custom_sleep(cycle//10)
+                    if cycle > 100:
+                        print(f'{self.name} sleeping.')
+                        await custom_sleep(10)
+                    else:
+                        print(f'{self.name} sleeping.')
+                        await custom_sleep(1)
+            except:
+                print(f'An exception occured for {self.name}.')
+                await custom_sleep(1)
+
 # Vet - heals the dog
-class Vet:
+class Vet(employee):
     population = 0
 
     def __init__(self):
         Vet.population += 1
         self.name = "Vet #" + str(Vet.population)
+        self.repair = 'unhealthy'
+        self.repair_time = 10
         print('Acquireing {}'.format(self.name))
     def __repr__(self):
         return self.name    
@@ -130,6 +161,7 @@ class Clinic:
         self.groomers = groomers
         self.trainers = trainers
         self.valets = valets
+        self.running = True
         
         self.conditions = {}
     def generate_clinic(self,no_dogs,no_vets,no_groomers,no_trainers,no_valets):
@@ -195,6 +227,15 @@ class Clinic:
         return len(self.trainers)
     def valet_count(self):
         return len(self.valets)
+    
+    async def routine(self):
+        try:
+            while self.running:
+                print(f"{clinic.conditions}")
+                print(f"Dogs Entry: {len(clinic.entry_queue)} Dogs Pen: {len(clinic.pen)} Dogs Exit: {len(clinic.exit_queue)}")
+                await custom_sleep(10)
+        except:
+            print('Error in clinic.routine()')
 if __name__ == "__main__":
     # doglist = [['jake',8,'terrier',['untrimmed','unhealthy','hungry']]]
     # for animal in doglist:
@@ -242,6 +283,9 @@ if __name__ == "__main__":
     employees = []
     for valet in clinic.valets:
         tasks.append(valet.routine(clinic))
+    for vet in clinic.veterinarians:
+        tasks.append(vet.routine(clinic))
+    tasks.append(clinic.routine())
         # employees.append(trainer)
     # tasks = [employees[0].routine()]
     # vet.treat_dog(dog)
@@ -252,3 +296,5 @@ if __name__ == "__main__":
     #     # clinic.rem_dog_pen(dog)
     print('Pen: ',clinic.pen)
     print(clinic.conditions)
+    word='unhealthy'
+    print(clinic.conditions[word],'--test')
